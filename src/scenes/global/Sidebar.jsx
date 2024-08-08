@@ -55,12 +55,15 @@ const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isSidebarVisible, setIsSidebarVisible] = useState(!isMobile);
   const [selected, setSelected] = useState("Dashboard");
+  const [getUser, setgetUser] = useState({})
 
   useEffect(() => {
     setIsSidebarVisible(!isMobile);
+    setgetUser(JSON.parse(localStorage.getItem("data")))
   }, [isMobile]);
+  console.log(getUser)
 
-  return  (
+  return (
     <Box display="flex" height="100vh">
       {isMobile && (
         <IconButton
@@ -151,10 +154,10 @@ const Sidebar = () => {
                     fontWeight="bold"
                     sx={{ m: "10px 0 0 0" }}
                   >
-                    Murtaza Mahmood
+                    {getUser && getUser.name}
                   </Typography>
                   <Typography variant="h5" color={colors.greenAccent[500]}>
-                    Software Developer
+                  {getUser && getUser.designation}
                   </Typography>
                 </Box>
               </Box>
@@ -353,14 +356,14 @@ const Sidebar = () => {
         </ProSidebar>
       </Box>
       <Box
-        // sx={{
-        //   flexGrow: 1,
-        //   ml: isSidebarVisible && !isMobile ? (isCollapsed ? "80px" : "100px") : "0",
-        //   transition: "margin-left 0.3s",
-        //   height: "100vh",
-        //   overflow: "auto",
-        //   padding: "20px",
-        // }}
+      // sx={{
+      //   flexGrow: 1,
+      //   ml: isSidebarVisible && !isMobile ? (isCollapsed ? "80px" : "100px") : "0",
+      //   transition: "margin-left 0.3s",
+      //   height: "100vh",
+      //   overflow: "auto",
+      //   padding: "20px",
+      // }}
       >
         {/* Main content goes here */}
       </Box>

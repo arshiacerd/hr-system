@@ -153,10 +153,9 @@ const MyTasks = () => {
         <DataGrid
           rows={projects}
           columns={columns}
-          getRowId={(row) => row._id}
-          initialState={{ pagination: { paginationModel: { page: 0, pageSize: 5 } } }}
-          pageSizeOptions={[5, 10]}
-          disableSelectionOnClick
+          getRowId={(row) => row.date + row.name}
+          pageSize={10} // Set default page size explicitly
+          pageSizeOptions={[10, 20, 50]} // Set page size options
         />
       </Box>
 

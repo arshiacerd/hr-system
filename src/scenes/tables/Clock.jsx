@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, Button, Card, CardContent, Avatar, Grid, Table, TableBody, TableCell, TableHead, TableRow, Paper, TableContainer, styled, useTheme } from '@mui/material';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import PauseIcon from '@mui/icons-material/Pause';
+import AlarmIcon from '@mui/icons-material/Alarm';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -21,6 +24,32 @@ const Clock = () => {
   const [totalMonthlyHours, setTotalMonthlyHours] = useState("0h : 0min : 0sec");
 
   useEffect(() => {
+    const storedCheckInTime = localStorage.getItem('checkInTime');
+    const storedIsActive = JSON.parse(localStorage.getItem('isActive'));
+    const storedTime = JSON.parse(localStorage.getItem('time'));
+
+    if (storedCheckInTime) {
+      setCheckInTime(new Date(storedCheckInTime));
+    }
+    if (storedIsActive) {
+      setIsActive(storedIsActive);
+    }
+    if (storedTime) {
+      setTime(storedTime);
+    }
+
+    let interval;
+    if (storedIsActive) {
+      interval = setInterval(() => {
+        setTime(prevTime => prevTime + 1);
+      }, 1000);
+    }
+
+    getEntries();
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
     let interval;
     if (isActive) {
       interval = setInterval(() => {
@@ -29,17 +58,34 @@ const Clock = () => {
     } else if (!isActive && time !== 0) {
       clearInterval(interval);
     }
-    getEntries();
-    return () => clearInterval(interval);
-  }, [isActive, time]);
 
-  const handleCheckin = () => {
+    localStorage.setItem('isActive', JSON.stringify(isActive));
+    localStorage.setItem('time', JSON.stringify(time));
+    localStorage.setItem('checkInTime', checkInTime ? checkInTime.toISOString() : '');
+
+    return () => clearInterval(interval);
+  }, [isActive, time, checkInTime]);
+
+  const handleCheckin = async () => {
     const now = new Date();
     if (!isActive) {
+      const todayEntries = timeEntries.filter(entry => {
+        const entryDate = new Date(entry.checkIn).toLocaleDateString();
+        return entryDate === now.toLocaleDateString();
+      });
+
+      if (todayEntries.length > 0) {
+        alert("You cannot clock in more than once per day.");
+        return;
+      }
+
       setCheckInTime(now);
       setIsActive(true);
       setCheckInButtonText("Clock Out");
     } else {
+      const confirmClockOut = window.confirm("You won't be able to clock in again today. Do you want to proceed?");
+      if (!confirmClockOut) return;
+
       setIsActive(false);
       setCheckInButtonText("Check In");
       const checkOutTime = now;
@@ -59,9 +105,12 @@ const Clock = () => {
         })
         .catch((err) => {
           console.log(err);
-          toast.info(err.response.data.error);
+          alert(err.response.data.error);
         });
       setTime(0);
+      localStorage.removeItem('checkInTime');
+      localStorage.removeItem('isActive');
+      localStorage.removeItem('time');
     }
   };
 
@@ -107,7 +156,7 @@ const Clock = () => {
           <Card sx={{ boxShadow: 3 }}>
             <CardContent sx={{ backgroundColor: theme.palette.background.paper }}>
               <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <Avatar sx={{ bgcolor: 'primary.main', width: 80, height: 80 }}>
+                <Avatar sx={{ bgcolor: theme.palette.primary.main, width: 80, height: 80 }}>
                   <AccessTimeIcon fontSize="large" style={{ color: theme.palette.text.primary }} />
                 </Avatar>
                 <Typography variant="h5" sx={{ mt: 2, color: theme.palette.text.primary }}>Your Time</Typography>
@@ -119,6 +168,7 @@ const Clock = () => {
                   variant="contained"
                   color={isActive ? 'secondary' : 'primary'}
                   onClick={handleCheckin}
+                  startIcon={isActive ? <PauseIcon /> : <PlayArrowIcon />}
                   sx={{ mt: 2 }}
                 >
                   {checkInButtonText}

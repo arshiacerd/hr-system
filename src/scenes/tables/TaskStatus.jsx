@@ -118,13 +118,38 @@ const TaskStatus = () => {
         }}
       >
         <DataGrid
-          rows={projects}
-          columns={columns}
-          getRowId={(row) => row._id}
-          initialState={{ pagination: { paginationModel: { page: 0, pageSize: 5 } } }}
-          pageSizeOptions={[5, 10]}
-          disableSelectionOnClick
-        />
+       rows={projects}
+       columns={columns}
+       getRowId={(row) => row.date + row.name}
+       pageSize={10} // Set default page size explicitly
+       pageSizeOptions={[10, 20, 50]} // Set page size options
+       sx={{
+         "& .MuiDataGrid-root": {
+           border: "none",
+         },
+         "& .MuiDataGrid-cell": {
+           borderBottom: "none",
+         },
+         "& .name-column--cell": {
+           color: colors.greenAccent[500],
+         },
+         "& .MuiDataGrid-columnHeaders": {
+           backgroundColor: colors.blueAccent[700],
+           borderBottom: "none",
+         },
+         "& .MuiDataGrid-virtualScroller": {
+           backgroundColor: colors.primary[400],
+         },
+         "& .MuiDataGrid-footerContainer": {
+           borderTop: "none",
+           backgroundColor: colors.blueAccent[700],
+         },
+         "& .MuiCheckbox-root": {
+           color: `${colors.greenAccent[200]} !important`,
+         },
+       }}
+     />
+     
       </Box>
 
       {isPopupOpen && (
