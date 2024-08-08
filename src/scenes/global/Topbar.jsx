@@ -33,6 +33,9 @@ const Topbar = () => {
 
   const handleLogoutClick = () => {
     // Handle logout logic here
+    localStorage.removeItem('email');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('login');
     navigate('/');
     handleMenuClose();
   };
