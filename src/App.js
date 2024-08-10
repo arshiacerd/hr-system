@@ -145,7 +145,7 @@ import Test from "./components/Test";
 import LineChartParent from "./components/LineChartParent";
 import LineChart from "./components/LineChart";
 import ProtectedRoute from "./components/ProtectedRoute";
-
+import Bar from "./scenes/bar/index";
 function App() {
   const [theme, colorMode] = useMode();
   const [isSidebar, setIsSidebar] = useState(true);
@@ -205,7 +205,7 @@ function App() {
               <Route path="/account" element={<ProtectedRoute element={Account} />} />
               <Route path="/main" element={<ProtectedRoute element={MainComponent} />} />
               <Route path="/timeoffapp" element={<ProtectedRoute element={TimeoffApp} />} />
-              <Route path="/barchart" element={<ProtectedRoute element={BarChart} />} />
+              <Route path="/barchart" element={<ProtectedRoute element={Bar} />} />
               <Route path="/linechart" element={<ProtectedRoute element={LineChart} />} />
               <Route path="/linechartparent" element={<ProtectedRoute element={LineChartParent} />} />
               <Route path="/piechart" element={<ProtectedRoute element={PieChart} />} />

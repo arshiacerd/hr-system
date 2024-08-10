@@ -7,11 +7,13 @@ import LockOpenOutlinedIcon from "@mui/icons-material/LockOpenOutlined";
 import SecurityOutlinedIcon from "@mui/icons-material/SecurityOutlined";
 import Header from "../../components/Header";
 import axios from 'axios';
+import BarChart from "../../components/BarChart"; // Ensure this import is correct
 
-const Team = () => {
+const Team = ({ setEmployeeCount }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const [teamData, setTeamData] = useState([]);
+  const [roleData, setRoleData] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [isPopupOpen, setPopupOpen] = useState(false);
 
@@ -19,14 +21,32 @@ const Team = () => {
     const fetchTeamData = async () => {
       try {
         const response = await axios.get('https://hr-backend-gamma.vercel.app/api/getUser');
-        setTeamData(response.data);
+        const data = response.data;
+        setTeamData(data);
+        setEmployeeCount(data.length); // Update employee count
+    
+        // Calculate the role counts
+        const roleCounts = data.reduce((acc, user) => {
+          acc[user.status] = (acc[user.status] || 0) + 1;
+          return acc;
+        }, {});
+    
+        // Convert roleCounts to array format suitable for BarChart
+        const roleArray = [
+          { department: 'Admin', totalSalary: roleCounts.Admin || 0 },
+          { department: 'Manager', totalSalary: roleCounts.Manager || 0 },
+          { department: 'Employee', totalSalary: roleCounts.Employee || 0 }
+        ];
+    
+        setRoleData(roleArray);
       } catch (error) {
         console.error('Error fetching team data', error);
       }
     };
+    
 
     fetchTeamData();
-  }, []);
+  }, [setEmployeeCount]);
 
   const handleEditClick = (user) => {
     setSelectedUser(user);
@@ -63,6 +83,7 @@ const Team = () => {
       });
       const updatedData = await axios.get('https://hr-backend-gamma.vercel.app/api/getUser');
       setTeamData(updatedData.data);
+      setEmployeeCount(updatedData.data.length); // Update employee count
       setPopupOpen(false);
       setSelectedUser(null);
     } catch (error) {
@@ -77,11 +98,11 @@ const Team = () => {
 
   const columns = [
     { field: "name", headerName: "Name", flex: 1, cellClassName: "name-column--cell" },
-    { field: "designation", headerName: "Designation", width: 180 },
+    { field: "designation", headerName: "Designation", flex: 1 },
     {
       field: "status",
       headerName: "Access Level",
-      width: 150,
+      flex: 1,
       renderCell: (params) => (
         <Box display="flex" alignItems="center" gap="10px">
           {params.value === "Admin" && <AdminPanelSettingsOutlinedIcon />}
@@ -91,19 +112,8 @@ const Team = () => {
         </Box>
       )
     },
-    { field: "personalEmail", headerName: "Email", width: 250 },
-    { field: "reportTo", headerName: "Managed By", width: 150 },
-    {
-      field: "actions",
-      headerName: "Actions",
-      width: 200,
-      renderCell: (params) => (
-        <div>
-          <button className="edit-but" onClick={() => handleEditClick(params.row)}>Update</button>
-          <button className="del-but" onClick={handleDeleteClick}>Delete</button>
-        </div>
-      ),
-    },
+    { field: "personalEmail", headerName: "Email", flex: 1 },
+    { field: "reportTo", headerName: "Managed By", flex: 1 },
   ];
 
   return (
@@ -155,6 +165,18 @@ const Team = () => {
           }}
           disableMultipleRowSelection={true}
         />
+      </Box>
+
+      <Box m="40px 0 0 0">
+        <Typography variant="h5" fontWeight="600">
+          Role Distribution
+        </Typography>
+        <Box
+          mt="25px"
+          height="400px" // Adjust height as needed
+        >
+          <BarChart data={roleData} />
+        </Box>
       </Box>
 
       {isPopupOpen && (

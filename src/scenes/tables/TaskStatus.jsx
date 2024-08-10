@@ -82,17 +82,17 @@ const TaskStatus = () => {
     { field: "assignedBy", headerName: "Assigned By", flex: 1 },
     { field: "startDate", headerName: "Start Date", flex: 1, renderCell: (params) => params.value.slice(0, 10) },
     { field: "endDate", headerName: "End Date", flex: 1, renderCell: (params) => params.value.slice(0, 10) },
-    {
-      field: "actions",
-      headerName: "Actions",
-      flex: 1,
-      renderCell: (params) => (
-        <Box>
-          {/* <Button variant="contained" color="primary" onClick={() => handleEditClick(params.row)}>Edit</Button> */}
-          <Button variant="contained" color="secondary" onClick={() => handleDeleteClick(params.row._id)}>Delete</Button>
-        </Box>
-      ),
-    },
+    // {
+    //   field: "actions",
+    //   headerName: "Actions",
+    //   flex: 1,
+    //   renderCell: (params) => (
+    //     <Box>
+    //       {/* <Button variant="contained" color="primary" onClick={() => handleEditClick(params.row)}>Edit</Button> */}
+    //       <Button variant="contained" color="secondary" onClick={() => handleDeleteClick(params.row._id)}>Delete</Button>
+    //     </Box>
+    //   ),
+    // },
   ];
 
   return (

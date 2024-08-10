@@ -3,6 +3,7 @@ import axios from 'axios';
 import { ResponsivePie } from '@nivo/pie';
 import { tokens } from '../theme';
 import { useTheme } from '@mui/material';
+import nlp from 'compromise';
 
 const PieChart = () => {
   const theme = useTheme();
@@ -12,8 +13,8 @@ const PieChart = () => {
   useEffect(() => {
     const fetchTeamData = async () => {
       try {
-        const response = await axios.get('https://murtazamahm007-abidipro.mdbgo.io/api/getUser');
-        setTeamData(response.data); // Assuming response.data is an array of objects with designation information
+        const response = await axios.get('https://hr-backend-gamma.vercel.app/api/getUser');
+        setTeamData(response.data);
       } catch (error) {
         console.error('Error fetching team data', error);
       }
@@ -22,21 +23,61 @@ const PieChart = () => {
     fetchTeamData();
   }, []);
 
-  // Calculate counts for each designation
+  const categorizeDesignationAI = (designation) => {
+    if (!designation || typeof designation !== 'string') {
+      return { category: 'Other', subcategory: designation || 'Unknown' };
+    }
+
+    const doc = nlp(designation.toLowerCase());
+
+    if (doc.has('developer') || doc.has('engineer')) {
+      return { category: 'Development', subcategory: designation };
+    } else if (doc.has('qa') || doc.has('tester')) {
+      return { category: 'Testing ', subcategory: designation };
+    } else if (doc.has('hr') || doc.has('recruiter')) {
+      return { category: 'HR ', subcategory: designation };
+    } else if (doc.has('finance') || doc.has('accountant')) {
+      return { category: 'Finance ', subcategory: designation };
+    } else {
+      return { category: 'Other', subcategory: designation };
+    }
+  };
+
   const calculateDesignationCounts = (data) => {
     const counts = {};
+
     data.forEach(item => {
-      const designation = item.designation;
-      counts[designation] = counts[designation] ? counts[designation] + 1 : 1;
+      const { category, subcategory } = categorizeDesignationAI(item.designation);
+      if (!counts[category]) {
+        counts[category] = { value: 0, subcategories: {} };
+      }
+      counts[category].value += 1;
+      counts[category].subcategories[subcategory] = counts[category].subcategories[subcategory]
+        ? counts[category].subcategories[subcategory] + 1
+        : 1;
     });
-    return Object.keys(counts).map(designation => ({
-      id: designation,
-      value: counts[designation]
+
+    return Object.keys(counts).map(category => ({
+      id: category,
+      value: counts[category].value,
+      subcategories: counts[category].subcategories,
     }));
   };
 
-  // Transform fetched data into format required by ResponsivePie
   const transformedData = calculateDesignationCounts(teamData);
+
+  const CustomTooltip = ({ datum }) => (
+    <div style={{ padding: '10px', background: 'white', border: '1px solid #ccc', borderRadius: '4px' }}>
+      <strong>{datum.id}</strong>
+      <ul style={{ margin: 0, padding: 0 }}>
+        {Object.entries(datum.data.subcategories).map(([subcat, count]) => (
+          <li key={subcat} style={{ listStyleType: 'none', padding: '2px 0' }}>
+            {subcat}: {count}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 
   return (
     <ResponsivePie
@@ -69,7 +110,7 @@ const PieChart = () => {
           },
         },
       }}
-      margin={{ top: 40, right: 80, bottom: 80, left: 80 }}
+      margin={{ top: 40, right: 40, bottom: 80, left: 40 }}
       innerRadius={0.5}
       padAngle={0.7}
       cornerRadius={3}
@@ -109,6 +150,7 @@ const PieChart = () => {
           spacing: 10,
         },
       ]}
+      tooltip={CustomTooltip}
       legends={[
         {
           anchor: "bottom",

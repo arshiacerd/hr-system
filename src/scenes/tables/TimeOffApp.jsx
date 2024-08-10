@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 import {
   Box,
   Button,
@@ -18,6 +16,7 @@ import {
   Paper,
   Modal,
   Grid,
+  Alert,
 } from '@mui/material';
 import { tokens } from '../../theme';
 import Header from '../../components/Header';
@@ -32,6 +31,7 @@ const TimeoffApp = () => {
   const [isPopupOpen, setPopupOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState(null);
   const [approvedRequests, setApprovedRequests] = useState(new Set());
+  const [alertMessage, setAlertMessage] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -53,9 +53,9 @@ const TimeoffApp = () => {
   const handleApprove = async (id, reason, off_date, end_date, email, name) => {
     try {
       const res = await axios.post("https://hr-backend-gamma.vercel.app/api/timeoff/approve", { id });
-
-      toast.success(res.data.message);
-
+  
+      alert(res.data.message);
+  
       await axios.get("https://hr-backend-gamma.vercel.app/api/timeoff/mail", {
         params: {
           email,
@@ -64,15 +64,19 @@ const TimeoffApp = () => {
           end_date
         }
       });
-
+  
       setApprovedRequests(prev => new Set(prev).add(id));
-
-      const { data } = await axios.get('https://hr-backend-gamma.vercel.app/api/timeoff');
-      setProjects(data);
+  
+      // Add a small delay before reloading the page
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
+  
     } catch (e) {
       console.log(e);
     }
   };
+  
 
   const handlePopupClose = () => {
     setPopupOpen(false);
@@ -124,6 +128,11 @@ const TimeoffApp = () => {
           },
         }}
       >
+        {alertMessage && (
+          <Alert severity="success" onClose={() => setAlertMessage(null)}>
+            {alertMessage}
+          </Alert>
+        )}
         <TableContainer component={Paper}>
           <Table>
             <TableHead>
@@ -246,7 +255,6 @@ const TimeoffApp = () => {
           </form>
         </Box>
       </Modal>
-      <ToastContainer />
     </Box>
   );
 };

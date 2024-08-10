@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, useTheme, Container, Paper } from "@mui/material";
+import { Box, Typography, useTheme } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import axios from 'axios';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 import Header from "../../components/Header";
 import { tokens } from '../../theme';
 
-const EarningAndDeductions = () => {
+const EarningAndDeductions = ({ setTotalExpenses }) => {
   const theme = useTheme();
-  const colors = tokens(theme.palette.mode) || {};
+  const colors = tokens(theme.palette.mode) || {}; // Ensure colors is always an object
 
   const [projects, setProjects] = useState([]);
 
@@ -21,6 +19,11 @@ const EarningAndDeductions = () => {
     try {
       const employees = await axios.get("https://hr-backend-gamma.vercel.app/api/EmployeesPayroll");
       setProjects(employees.data);
+
+      // Calculate the total expenses (sum of basic salaries)
+      const totalExpenses = employees.data.reduce((acc, employee) => acc + (employee.basicSalary || 0), 0);
+      setTotalExpenses(totalExpenses);
+
     } catch (err) {
       console.log(err);
     }
@@ -35,65 +38,53 @@ const EarningAndDeductions = () => {
     { field: "netSalary", headerName: "Total Salary", width: 150 },
   ];
 
-  // Ensure colors are defined and fall back to default if not
-  const primaryColor = colors.primary ? colors.primary[400] : theme.palette.primary.main;
-  const primaryLightColor = colors.primary ? colors.primary.light : theme.palette.primary.light;
-  const successColor = colors.success ? colors.success.main : theme.palette.success.main;
-  const backgroundColor = colors.background ? colors.background.default : theme.palette.background.default;
-
   return (
-    <Container maxWidth="lg">
-      <Box display="flex" justifyContent="center" mt={5}>
-        <Box flex={1} p={3} bgcolor={primaryColor} borderRadius={3} boxShadow={3}>
-          <Header title="Earning And Deductions" subtitle="Managing Employee Payroll" />
-          <Box mt={4} sx={{ height: '75vh', overflowY: 'auto' }}>
-            <Paper elevation={3} sx={{ padding: 2 }}>
-              <Box sx={{ height: '60vh' }}>
-                <DataGrid
-                  rows={projects}
-                  columns={columns}
-                  getRowId={(row) => row._id}
-                  initialState={{
-                    pagination: {
-                      paginationModel: { page: 0, pageSize: 10 },
-                    },
-                  }}
-                  pageSizeOptions={[10, 20, 50]}
-                  checkboxSelection
-                  disableMultipleRowSelection={true}
-                  sx={{
-                    "& .MuiDataGrid-root": {
-                      border: "none",
-                    },
-                    "& .MuiDataGrid-cell": {
-                      borderBottom: "none",
-                    },
-                    "& .name-column--cell": {
-                      color: successColor,
-                    },
-                    "& .MuiDataGrid-columnHeaders": {
-                      backgroundColor: primaryLightColor,
-                      borderBottom: "none",
-                    },
-                    "& .MuiDataGrid-virtualScroller": {
-                      backgroundColor: backgroundColor,
-                    },
-                    "& .MuiDataGrid-footerContainer": {
-                      borderTop: "none",
-                      backgroundColor: primaryLightColor,
-                    },
-                    "& .MuiCheckbox-root": {
-                      color: `${successColor} !important`,
-                    },
-                  }}
-                />
-              </Box>
-            </Paper>
-          </Box>
-        </Box>
+    <Box m="20px">
+      <Header title="EARNING AND DEDUCTIONS" subtitle="Managing Employee Payroll" />
+      <Box
+        m="40px 0 0 0"
+        height="75vh"
+        sx={{
+          "& .MuiDataGrid-root": {
+            border: "none",
+          },
+          "& .MuiDataGrid-cell": {
+            borderBottom: "none",
+          },
+          "& .name-column--cell": {
+            color: colors.greenAccent[300],
+          },
+          "& .MuiDataGrid-columnHeaders": {
+            backgroundColor: colors.blueAccent[700],
+            borderBottom: "none",
+          },
+          "& .MuiDataGrid-virtualScroller": {
+            backgroundColor: colors.primary[400],
+          },
+          "& .MuiDataGrid-footerContainer": {
+            borderTop: "none",
+            backgroundColor: colors.blueAccent[700],
+          },
+          "& .MuiCheckbox-root": {
+            color: `${colors.greenAccent[200]} !important`,
+          },
+        }}
+      >
+        <DataGrid
+          rows={projects}
+          columns={columns}
+          getRowId={(row) => row._id}
+          initialState={{
+            pagination: {
+              paginationModel: { page: 0, pageSize: 10 },
+            },
+          }}
+          pageSizeOptions={[10, 20, 50]}
+          checkboxSelection
+          disableMultipleRowSelection={true}
+        />
       </Box>
-      <ToastContainer />
-    </Container>
+    </Box>
   );
 };
 

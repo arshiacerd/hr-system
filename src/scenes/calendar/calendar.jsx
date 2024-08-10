@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from "react";
-import FullCalendar, { formatDate } from "@fullcalendar/react";
+import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import listPlugin from "@fullcalendar/list";
 import { Box, Typography, useTheme } from "@mui/material";
+import axios from "axios";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import Header from "../../components/Header";
 import { tokens } from "../../theme";
-import axios from "axios";
 
 const Calendar = () => {
   const theme = useTheme();
@@ -58,6 +60,43 @@ const Calendar = () => {
     return `${hours}h : ${minutes}min : ${seconds}sec`;
   };
 
+  const handleDateClick = async (selected) => {
+    const title = prompt("Please enter a new title for your event");
+    const email = prompt("Please enter the email address to send a reminder");
+    const time = prompt("Please enter the time (HH:mm) for the event");
+  
+    const calendarApi = selected.view.calendar;
+    calendarApi.unselect(); // Clear date selection
+  
+    if (title && email && time) {
+      const startTime = new Date(selected.startStr);
+      const [hours, minutes] = time.split(":");
+      startTime.setHours(hours, minutes);
+  
+      calendarApi.addEvent({
+        id: `${selected.dateStr}-${title}`,
+        title,
+        start: startTime,
+        end: startTime,
+        allDay: false,
+      });
+  
+      try {
+        await axios.post('https://hr-backend-gamma.vercel.app/api/scheduleEvent/sendMail', {
+          email,
+          subject: 'Event Reminder',
+          message: `Your event "${title}" is scheduled for ${startTime}.`,
+          eventTime: startTime,
+        });
+        toast.success("Event scheduled and email will be sent!");
+      } catch (error) {
+        console.error("Error scheduling email:", error);
+        toast.error("Failed to schedule email.");
+      }
+    }
+  };
+  
+
   return (
     <Box m="20px">
       <Header title="Calendar" subtitle="Full Calendar Interactive Page" />
@@ -74,14 +113,18 @@ const Calendar = () => {
             }}
             initialView="dayGridMonth"
             editable={true}
-           
             selectable={true}
+            selectMirror={true}
+            dayMaxEvents={true}
+            select={handleDateClick}
             events={currentEvents}
-            />
-            </Box>
-            </Box>
-            </Box>
-            );
-            };
-            
-            export default Calendar;
+            eventColor="#378006" // Example of changing the background color of events
+          />
+        </Box>
+      </Box>
+      <ToastContainer />
+    </Box>
+  );
+};
+
+export default Calendar;

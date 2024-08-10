@@ -134,11 +134,12 @@ const ProjectTaskPage = () => {
         toast.success("Task updated successfully");
       } else {
         const response = await axios.post("https://hr-backend-gamma.vercel.app/api/assign-tasks", formData);
-        setProjects([...projects, { ...formData, _id: response.data.project._id }]);
+
+        setProjects([...projects, { ...formData, _id: response.data._id }]);
         toast.success("Task added successfully");
       }
     } catch (error) {
-      console.error("Error processing project:", error.response ? error.response.data : error.message);
+      console.error("Error processing project:", error);
       toast.error(`Error processing project: ${error.response ? error.response.data.message : "Unknown error"}`);
     }
 

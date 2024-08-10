@@ -1,54 +1,94 @@
-import React from "react";
-import { Box, Button, IconButton, Typography, useTheme } from "@mui/material";
+import React, { useState, useEffect } from "react";
+import { Box, Button, Typography, useTheme } from "@mui/material";
 import { tokens } from "../../theme";
-import { mockTransactions } from "../../data/mockData";
 import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
-import EmailIcon from "@mui/icons-material/Email";
-import PointOfSaleIcon from "@mui/icons-material/PointOfSale";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import TrafficIcon from "@mui/icons-material/Traffic";
+import PointOfSaleIcon from "@mui/icons-material/PointOfSale";
+import LanguageIcon from "@mui/icons-material/Language"; // Import the web icon
 import Header from "../../components/Header";
-import LineChart from "../../components/LineChart";
-import GeographyChart from "../../components/GeographyChart";
 import BarChart from "../../components/BarChart";
 import StatBox from "../../components/StatBox";
 import ProgressCircle from "../../components/ProgressCircle";
+import PieChart from "../../components/PieChart";
+import axios from 'axios';
 
 const Dashboard = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
-  // Log mockTransactions to check its value
-  console.log("mockTransactions: ", mockTransactions);
+  const [employeeCount, setEmployeeCount] = useState(0);
+  const [totalExpenses, setTotalExpenses] = useState(0);
+  const [projectCount, setProjectCount] = useState(0);
+  const [tasks, setTasks] = useState([]);
+  const [completedTasks, setCompletedTasks] = useState(0);
+  const [pendingTasks, setPendingTasks] = useState(0);
+  const [totalTasks, setTotalTasks] = useState(0);
+
+  useEffect(() => {
+    fetchEmployeeData();
+    fetchProjectCount();
+    fetchTasks();
+  }, []);
+
+  const fetchEmployeeData = async () => {
+    try {
+      const response = await axios.get("https://hr-backend-gamma.vercel.app/api/EmployeesPayroll");
+      const totalBasicSalary = response.data.reduce((acc, employee) => acc + (employee.basicSalary || 0), 0);
+      setTotalExpenses(totalBasicSalary);
+      setEmployeeCount(response.data.length);
+    } catch (err) {
+      console.log("Error fetching employee data:", err);
+    }
+  };
+
+  const fetchProjectCount = async () => {
+    try {
+      const response = await axios.get("https://hr-backend-gamma.vercel.app/api/project/count");
+      setProjectCount(response.data.count);
+    } catch (err) {
+      console.log("Error fetching project count:", err);
+    }
+  };
+
+  const fetchTasks = async () => {
+    try {
+      const response = await axios.get('https://hr-backend-gamma.vercel.app/api/my-tasks', {
+        params: { name: localStorage.getItem("name") },
+      });
+      const taskData = response.data;
+      setTasks(taskData);
+      processTaskData(taskData);
+    } catch (error) {
+      console.error("Failed to fetch tasks:", error);
+    }
+  };
+
+  const processTaskData = (tasks) => {
+    const total = tasks.length;
+    const completed = tasks.filter(task => task.taskStatus === 'Completed').length;
+    const pending = tasks.filter(task => task.taskStatus === 'Pending').length;
+
+    setTotalTasks(total);
+    setCompletedTasks(completed);
+    setPendingTasks(pending);
+  };
+
+  // Calculate the progress as a percentage of completed tasks
+  const progress = totalTasks > 0 ? completedTasks / totalTasks : 0;
 
   return (
     <Box m="20px">
-    
       {/* HEADER */}
       <Box display="flex" justifyContent="space-between" alignItems="center">
         <Header title="DASHBOARD" subtitle="Welcome to your dashboard" />
-
-        <Box>
-          <Button
-            sx={{
-              backgroundColor: colors.blueAccent[700],
-              color: colors.grey[100],
-              fontSize: "14px",
-              fontWeight: "bold",
-              padding: "10px 20px",
-            }}
-          >
-            <DownloadOutlinedIcon sx={{ mr: "10px" }} />
-            Download Reports
-          </Button>
-        </Box>
       </Box>
 
       {/* GRID & CHARTS */}
       <Box
         display="grid"
         gridTemplateColumns="repeat(12, 1fr)"
-        gridAutoRows="140px"
+        gridAutoRows="160px"
         gap="20px"
       >
         {/* ROW 1 */}
@@ -60,12 +100,12 @@ const Dashboard = () => {
           justifyContent="center"
         >
           <StatBox
-            title="12,361"
-            subtitle="Emails Sent"
+            title={employeeCount}
+            subtitle="Active Employees"
             progress="0.75"
             increase="+14%"
             icon={
-              <EmailIcon
+              <PersonAddIcon
                 sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
               />
             }
@@ -79,8 +119,8 @@ const Dashboard = () => {
           justifyContent="center"
         >
           <StatBox
-            title="431,225"
-            subtitle="Sales Obtained"
+            title={totalExpenses}
+            subtitle="Salary Expense"
             progress="0.50"
             increase="+21%"
             icon={
@@ -98,8 +138,8 @@ const Dashboard = () => {
           justifyContent="center"
         >
           <StatBox
-            title="32,441"
-            subtitle="New Clients"
+            title={projectCount}
+            subtitle="Active Projects"
             progress="0.30"
             increase="+5%"
             icon={
@@ -115,110 +155,53 @@ const Dashboard = () => {
           display="flex"
           alignItems="center"
           justifyContent="center"
+          flexDirection="column"
+          p="20px"
         >
-          <StatBox
-            title="1,325,134"
-            subtitle="Traffic Received"
-            progress="0.80"
-            increase="+43%"
-            icon={
-              <TrafficIcon
-                sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
-              />
-            }
-          />
+          <LanguageIcon sx={{ color: colors.greenAccent[600], fontSize: "26px" }} />
+          <Typography variant="h6" fontWeight="600" textAlign="center" mt="10px">
+            <a href="https://abidisolutions.com" target="_blank" rel="noopener noreferrer" style={{ color: colors.grey[100], textDecoration: 'none' }}>
+              Visit Our Website
+            </a>
+            <p style={{color: colors.greenAccent[600]}}>Abidi Solutions</p>
+          </Typography>
         </Box>
 
         {/* ROW 2 */}
         <Box
-          gridColumn="span 8"
+          gridColumn="span 4"
           gridRow="span 2"
           backgroundColor={colors.primary[400]}
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+          p="20px"
         >
-          <Box
-            mt="25px"
-            p="0 30px"
-            display="flex "
-            justifyContent="space-between"
-            alignItems="center"
-          >
-            <Box>
-              <Typography
-                variant="h5"
-                fontWeight="600"
-                color={colors.grey[100]}
-              >
-                Revenue Generated
-              </Typography>
-              <Typography
-                variant="h3"
-                fontWeight="bold"
-                color={colors.greenAccent[500]}
-              >
-                $59,342.32
-              </Typography>
-            </Box>
-            <Box>
-              <IconButton>
-                <DownloadOutlinedIcon
-                  sx={{ fontSize: "26px", color: colors.greenAccent[500] }}
-                />
-              </IconButton>
-            </Box>
-          </Box>
-          <Box height="250px" m="-20px 0 0 0">
-            <LineChart isDashboard={true} />
+          <Typography variant="h5" fontWeight="600" textAlign="center">
+            Employee Dept
+          </Typography>
+          <Box width="100%" height="80%" mt="20px">
+            <PieChart />
           </Box>
         </Box>
+
         <Box
           gridColumn="span 4"
           gridRow="span 2"
           backgroundColor={colors.primary[400]}
-          overflow="auto"
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+          p="20px"
         >
-          <Box
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
-            borderBottom={`4px solid ${colors.primary[500]}`}
-            colors={colors.grey[100]}
-            p="15px"
-          >
-            <Typography color={colors.grey[100]} variant="h5" fontWeight="600">
-              Recent Transactions
-            </Typography>
+          <Typography variant="h5" fontWeight="600" textAlign="center">
+            Roles
+          </Typography>
+          <Box width="80%" height="80%" mt="20px">
+            <BarChart isDashboard={true} />
           </Box>
-          {mockTransactions && mockTransactions.map((transaction, i) => (
-            <Box
-              key={`${transaction.txId}-${i}`}
-              display="flex"
-              justifyContent="space-between"
-              alignItems="center"
-              borderBottom={`4px solid ${colors.primary[500]}`}
-              p="15px"
-            >
-              <Box>
-                <Typography
-                  color={colors.greenAccent[500]}
-                  variant="h5"
-                  fontWeight="600"
-                >
-                  {transaction.txId}
-                </Typography>
-                <Typography color={colors.grey[100]}>
-                  {transaction.user}
-                </Typography>
-              </Box>
-              <Box color={colors.grey[100]}>{transaction.date}</Box>
-              <Box
-                backgroundColor={colors.greenAccent[500]}
-                p="5px 10px"
-                borderRadius="4px"
-              >
-                ${transaction.cost}
-              </Box>
-            </Box>
-          ))}
         </Box>
 
         {/* ROW 3 */}
@@ -226,63 +209,38 @@ const Dashboard = () => {
           gridColumn="span 4"
           gridRow="span 2"
           backgroundColor={colors.primary[400]}
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
           p="30px"
         >
-          <Typography variant="h5" fontWeight="600">
-            Campaign
+          <Typography variant="h5" fontWeight="600" textAlign="center">
+            My Tasks
           </Typography>
           <Box
             display="flex"
             flexDirection="column"
             alignItems="center"
             mt="25px"
+            width="100%"
           >
-            <ProgressCircle size="125" />
+            <ProgressCircle size="125" progress={progress} />
             <Typography
               variant="h5"
               color={colors.greenAccent[500]}
               sx={{ mt: "15px" }}
             >
-              $48,352 revenue generated
+              {completedTasks} / {totalTasks} tasks completed
             </Typography>
-            <Typography>Includes extra misc expenditures and costs</Typography>
+            <Typography>Total tasks: {totalTasks}</Typography>
+            <Typography>Pending tasks: {pendingTasks}</Typography>
+            <Typography>Completed tasks: {completedTasks}</Typography>
           </Box>
         </Box>
 
-        <Box
-          gridColumn="span 4"
-          gridRow="span 2"
-          backgroundColor={colors.primary[400]}
-        >
-           <Typography
-            variant="h5"
-            fontWeight="600"
-            sx={{ padding: "30px 30px 0 30px" }}
-          >
-            Sales Quantity
-          </Typography>
-         <Box height="250px" mt="-20px">
-            <BarChart isDashboard={true}  data={mockTransactions} />
-          </Box> 
-        </Box>
-
-        <Box
-          gridColumn="span 4"
-          gridRow="span 2"
-          backgroundColor={colors.primary[400]}
-          padding="30px"
-        >
-          <Typography
-            variant="h5"
-            fontWeight="600"
-            sx={{ marginBottom: "15px" }}
-          >
-            Geography Based Traffic
-          </Typography>
-          <Box height="200px">
-            <GeographyChart isDashboard={true} />
-          </Box>
-        </Box>
+        {/* Website Section */}
+       
       </Box>
     </Box>
   );

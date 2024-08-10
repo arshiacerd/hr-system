@@ -65,7 +65,7 @@ const { data } = await axios.get('https://hr-backend-gamma.vercel.app/api/timeof
       Email: localStorage.getItem("email"),
       Name: localStorage.getItem("name"),
     };
-
+  
     try {
       await notifyManagerOfTimeOffRequest({
         managerEmail,
@@ -74,7 +74,7 @@ const { data } = await axios.get('https://hr-backend-gamma.vercel.app/api/timeof
         endDate: formData.To,
         reason: formData.Reason_for_Time_Off,
       });
-
+  
       if (editingIndex !== null) {
         const updatedProject = await axios.put(`https://hr-backend-gamma.vercel.app/api/timeoff/${projects[editingIndex]._id}`, formData);
         const updatedProjects = [...projects];
@@ -86,13 +86,20 @@ const { data } = await axios.get('https://hr-backend-gamma.vercel.app/api/timeof
         setProjects([...projects, newProject.data]);
         toast.success('Time Off Request created successfully');
       }
+  
       setPopupOpen(false);
       setEditingIndex(null);
+  
+      // Show an alert and refresh the page
+      window.alert('Time Off Request submitted successfully!');
+      window.location.reload();
+  
     } catch (error) {
       console.error('Error submitting form: ', error);
       toast.error('Failed to submit Time Off Request');
     }
   };
+  
 
   return (
     <Box m="20px">

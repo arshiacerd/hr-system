@@ -18,8 +18,33 @@ const ManageException = () => {
     let res = await axios.get(
       `https://date.nager.at/api/v3/publicholidays/${year.getFullYear()}/US`
     );
-    setData(res.data);
+    let holidays = res.data;
+
+    // Add weekends as holidays
+    const weekends = generateWeekends(year.getFullYear());
+    holidays = holidays.concat(weekends);
+
+    setData(holidays);
   }
+
+  const generateWeekends = (year) => {
+    let weekends = [];
+    let date = new Date(year, 0, 1);
+
+    while (date.getFullYear() === year) {
+      if (date.getDay() === 0 || date.getDay() === 6) { // Sunday or Saturday
+        weekends.push({
+          date: date.toISOString().split("T")[0],
+          name: date.getDay() === 0 ? "Sunday" : "Saturday",
+          countryCode: "US",
+          types: ["Weekend"],
+        });
+      }
+      date.setDate(date.getDate() + 1);
+    }
+
+    return weekends;
+  };
 
   useEffect(() => {
     fetchHolidays();
@@ -44,56 +69,40 @@ const ManageException = () => {
 
   return (
     <Container maxWidth="lg">
-      <Box display="flex" justifyContent="center" mt={5}>
+      <Box m="20px">
+        <Header title="Holidays Exceptions" subtitle="Manage Holidays and Exceptions" />
         <Box
-          flex={1}
-          p={3}
-          bgcolor={colors.primary[400]}
-          borderRadius={3}
-          boxShadow={3}
+          m="40px 0 0 0"
+          height="75vh"
+          sx={{
+            "& .MuiDataGrid-root": { border: "none" },
+            "& .MuiDataGrid-cell": { borderBottom: "none" },
+            "& .name-column--cell": { color: colors.greenAccent[500] },
+            "& .MuiDataGrid-columnHeaders": {
+              backgroundColor: colors.blueAccent[700],
+              borderBottom: "none",
+            },
+            "& .MuiDataGrid-virtualScroller": {
+              backgroundColor: colors.primary[400],
+            },
+            "& .MuiDataGrid-footerContainer": {
+              borderTop: "none",
+              backgroundColor: colors.blueAccent[700],
+            },
+            "& .MuiCheckbox-root": {
+              color: `${colors.greenAccent[200]} !important`,
+            },
+          }}
         >
-          <Header
-            title="Holidays Exceptions"
-            subtitle="Manage Holidays and Exceptions"
-          />
-          <Box sx={{ height: "70vh", overflowY: "auto" }}>
-            <Paper elevation={3} sx={{ padding: 2 }}>
-              <Box sx={{ height: "60vh" }}>
-                <DataGrid
-                  rows={data}
-                  columns={columns}
-                  getRowId={(row) => row.date + row.name}
-                  pageSize={10} // Set default page size explicitly
-                  pageSizeOptions={[10, 20, 50]} // Set page size options
-                  sx={{
-                    "& .MuiDataGrid-root": {
-                      border: "none",
-                    },
-                    "& .MuiDataGrid-cell": {
-                      borderBottom: "none",
-                    },
-                    "& .name-column--cell": {
-                      color: colors.greenAccent[500],
-                    },
-                    "& .MuiDataGrid-columnHeaders": {
-                      backgroundColor: colors.blueAccent[700],
-                      borderBottom: "none",
-                    },
-                    "& .MuiDataGrid-virtualScroller": {
-                      backgroundColor: colors.primary[400],
-                    },
-                    "& .MuiDataGrid-footerContainer": {
-                      borderTop: "none",
-                      backgroundColor: colors.blueAccent[700],
-                    },
-                    "& .MuiCheckbox-root": {
-                      color: `${colors.greenAccent[200]} !important`,
-                    },
-                  }}
-                />
-              </Box>
-            </Paper>
-          </Box>
+            <Box sx={{ height: "70vh", width: "100%" }}>
+              <DataGrid
+                rows={data}
+                columns={columns}
+                getRowId={(row) => row.date + row.name}
+                pageSize={10}
+                pageSizeOptions={[10, 20, 50]}
+              />
+            </Box>
         </Box>
       </Box>
       <ToastContainer />
